@@ -38,7 +38,7 @@ class CStatusResponse(ClientboundPacket):
     def next_connection_state(self):
         return ConnectionState.STATUS
 
-    def _packet_body(self) -> BufferedPacket:
+    def packet_body(self) -> BufferedPacket:
         packet_body = BufferedPacket(byte_order='big')
         packet_body.write_utf8_string(json.dumps(self._response), 32767)
         packet_body.flip()
@@ -57,7 +57,7 @@ class CPongResponse(ClientboundPacket):
     def next_connection_state(self):
         return ConnectionState.CLOSE
 
-    def _packet_body(self) -> BufferedPacket:
+    def packet_body(self) -> BufferedPacket:
         packet = BufferedPacket(byte_order='big')
         packet.write_int64(self._timestamp)
         return packet
