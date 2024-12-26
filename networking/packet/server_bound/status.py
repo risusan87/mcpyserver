@@ -15,7 +15,12 @@ class SStatusRequest(ServerboundPacket):
     
 class SPingRequest(ServerboundPacket):
 
-    
+    def __init__(self, timestamp: int):
+        self._timestamp = timestamp
+
     @property
     def packet_id(self):
         return 0x01
+    
+    def handle(self) -> ClientboundPacket:
+        return chandshake.CPongResponse(self._timestamp)
