@@ -1,13 +1,14 @@
 
 from networking.connection import ConnectionListener
 
-listener = None
+_listener = None
 
-def start_server():
-    global listener
-    listener = ConnectionListener()
-    listener.start_server()
+def start_server(port=25565):
+    global _listener
+    _listener = ConnectionListener()
+    _listener.start_server(port=port)
 
 def stop_server():
-    global listener
-    listener.stop_server()
+    global _listener
+    _listener.stop_server()
+    
