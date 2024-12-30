@@ -5,6 +5,7 @@ from typing import List
 from networking.packet import ClientboundPacket
 from networking.protocol import ConnectionState, ProtocolVersion
 from networking.data_type import BufferedPacket
+from networking.packet.packet_connection import PacketConnectionState
 from minecraft_py.player import PlayerMP
 
 ###
@@ -33,12 +34,9 @@ class CStatusResponse(ClientboundPacket):
     @property
     def packet_id(self):
         return 0x00
-    
-    @property
-    def next_connection_state(self):
-        return ConnectionState.STATUS
 
-    def packet_body(self) -> BufferedPacket:
+    def packet_body(self, p_state: PacketConnectionState) -> BufferedPacket:
+        p_state.state = ConnectionState.STATUS
         packet_body = BufferedPacket(byte_order='big')
         packet_body.write_utf8_string(json.dumps(self._response), 32767)
         packet_body.flip()
@@ -53,11 +51,8 @@ class CPongResponse(ClientboundPacket):
     def packet_id(self):
         return 0x01
 
-    @property
-    def next_connection_state(self):
-        return ConnectionState.CLOSE
-
-    def packet_body(self) -> BufferedPacket:
+    def packet_body(self, p_state: PacketConnectionState) -> BufferedPacket:
+        p_state.state = ConnectionState.CLOSE
         packet = BufferedPacket(byte_order='big')
         packet.write_int64(self._timestamp)
         return packet
