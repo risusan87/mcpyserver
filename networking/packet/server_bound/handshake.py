@@ -1,7 +1,9 @@
 
-from networking.packet import ServerboundPacket, ClientboundPacket, CEmptyPacket
+from networking.packet import ServerboundPacket, ClientboundPacket
+from networking.packet.packet_connection import PacketConnectionState
 from networking.protocol import ConnectionState
 from networking.exception import ProtocolError
+
 
 ###
 # packet arrival
@@ -18,12 +20,13 @@ class SHandshake(ServerboundPacket):
     def packet_id(self):
         return 0x00
     
-    def handle(self) -> ClientboundPacket:
+    def handle(self, p_state: PacketConnectionState) -> None:
         if self._next_state == 1:
-            return CEmptyPacket(next_server_state=ConnectionState.STATUS)
+            p_state.state = ConnectionState.STATUS
         elif self._next_state == 2:
-            return CEmptyPacket(next_server_state=ConnectionState.LOGIN)
+            p_state.state = ConnectionState.LOGIN
         elif self._next_state == 3:
-            return CEmptyPacket(next_server_state=ConnectionState.CONFIGURATION)
+            p_state.state = ConnectionState.CONFIGURATION
         else:
             raise ProtocolError('Invalid next state')
+        return None
