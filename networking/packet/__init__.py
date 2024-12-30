@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from networking.data_type import BufferedPacket
 from networking.protocol import ConnectionState
+from networking.packet.packet_connection import PacketConnectionState
 
 class Packet(ABC):
     
@@ -16,7 +17,7 @@ class Packet(ABC):
 class ServerboundPacket(Packet):
 
     @abstractmethod
-    def handle(self) -> 'ClientboundPacket':
+    def handle(self, p_state: PacketConnectionState) -> ClientboundPacket:
         pass
 
 
@@ -61,19 +62,3 @@ class ClientboundPacket(Packet):
         packet.write(pre_packet.read(pre_packet.buffer_size))
         packet.flip()
         return packet
-    
-class CEmptyPacket(ClientboundPacket):
-
-        def __init__(self, next_server_state: ConnectionState):
-            self._next_server_state = next_server_state
-            
-        @property
-        def packet_id(self):
-            return -1
-    
-        @property
-        def next_connection_state(self):
-            return self._next_server_state
-    
-        def _packet_body(self) -> BufferedPacket:
-            return None
