@@ -82,6 +82,12 @@ class Connection:
         self.packet_state = PacketConnectionState()
         self.packet_state.client_ip = address[0]
 
+        # For server initiated connections
+        self.bundle_lock = threading.Lock()
+        self.bundle = []
+        self.response_lock = threading.Condition()
+        self.response = None
+
     def start(self):
         if self.listener_thread:
             logger.warning('Listener already set')
@@ -96,6 +102,15 @@ class Connection:
                 self.interrupt()
                 continue
             if input_stream.available() == 0:
+                with self.bundle_lock:
+                    if self.bundle:
+                        for packets in self.bundle:
+                            output_stream.write_packet(packets)
+                        output_stream.flush()
+                        self.bundle = []
+                        with self.response_lock:
+                            self.response = input_stream.read_packet(self.packet_state)
+                            self.response_lock.notify()
                 continue
             logger.debug(f'Current connection state is: {self.packet_state.state.name}')
             incoming_packet = input_stream.read_packet(self.packet_state)
@@ -124,11 +139,26 @@ class Connection:
             self.connections_list.remove(self)
         self.client.close()
 
-    def send(self, data):
-        self.client.send(data)
-
-    def recv(self, size):
-        return self.client.recv(size)
-
     def get_connection(self):
         return self.client
+    
+    def send_packet(self, *clientbound_packets: packet.ClientboundPacket) -> packet.ServerboundPacket:
+        '''
+        Queue packets to be sent to the client.
+        Packets given in this function are guranteed to be sent in the order they are given as soon as next opportunity within network flow is available, and receives a response from the client.
+
+        Packets can be sent as a bundle as long as it won't break the protocol.
+        Generally, bundle packets are only acceptable in play state, where packets are surrounded by bundle delimiters (id = 0x00).
+        As of 1.20.6, the Notchian server only uses bundle delimiter to ensure Spawn Entity and associated packets used to configure the entity happen on the same tick. 
+        Each entity gets a separate bundle. 
+        The Notchian client doesn't allow more than 4096 packets in the same bundle.
+        '''
+        with self.response_lock:
+            self.response = None
+        with self.bundle_lock:
+            self.bundle.extend(clientbound_packets)
+        with self.response_lock:
+            while not self.response:
+                self.response_lock.wait()
+        return self.response
+        
