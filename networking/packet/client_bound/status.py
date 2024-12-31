@@ -26,8 +26,7 @@ class CStatusResponse(ClientboundPacket):
                 'online': online_players,
                 'sample': [{'name': player.get_name(), 'id': player.get_uuid() } for player in sample_players]
             },
-            'description': {'text': description},
-            'enforcesSecureChat': enforce_secure_chat
+            'description': {'text': description}
         }
         # TODO: Support legacy clients (MC 1.6, specifically 13w39b and below)
 
@@ -52,7 +51,7 @@ class CPongResponse(ClientboundPacket):
         return 0x01
 
     def packet_body(self, p_state: PacketConnectionState) -> BufferedPacket:
-        p_state.state = ConnectionState.CLOSE
         packet = BufferedPacket(byte_order='big')
         packet.write_int64(self._timestamp)
+        packet.flip()
         return packet
