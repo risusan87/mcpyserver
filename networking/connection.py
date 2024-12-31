@@ -6,8 +6,9 @@ from typing import List
 
 from logger import logger
 import networking.packet as packet
-from networking.socket_io import MCPacketInputStream, ConnectionOutputStream
+from networking.socket_io import MCPacketInputStream, MCPacketOutputStream
 from networking.protocol import ConnectionState
+from networking.packet.packet_connection import PacketConnectionState
 
 class ConnectionListener:
     
@@ -72,16 +73,14 @@ class Connection:
 
     def __init__(self, client: socket.socket, address, listener: ConnectionListener):
         self.client = client
-        self.address = address
         self.listener_thread = None
         self.connection_stop_event = threading.Event()
         self.connections_list = listener.connections
         self.lock = listener.connection_list_lock
-        self.connection_state = ConnectionState.HANDSHAKE
 
-        # low level configuration
-        self._compress_threshold = -1
-        self._encryption = False
+        # Packet configuration
+        self.packet_state = PacketConnectionState()
+        self.packet_state.client_ip = address[0]
 
     def start(self):
         if self.listener_thread:
@@ -90,26 +89,27 @@ class Connection:
         self.listener_thread.start()        
 
     def _handle_connection(self):
-        input_stream = MCPacketInputStream(self.client)
-        output_stream = ConnectionOutputStream(self.client)
+        input_stream = MCPacketInputStream(self.client, self.packet_state)
+        output_stream = MCPacketOutputStream(self.client, self.packet_state)
         while not self.connection_stop_event.is_set():
+            if self.packet_state.state == ConnectionState.CLOSE:
+                self.interrupt()
+                continue
             if input_stream.available() == 0:
                 continue
-            logger.info(f'Connection reading as state {self.connection_state}')
-            incoming_packet = input_stream.read_packet(self.connection_state)
-            logger.info(f'Packet received: {incoming_packet}')
-            if not packet:
+            logger.debug(f'Current connection state is: {self.packet_state.state.name}')
+            incoming_packet = input_stream.read_packet(self.packet_state)
+            logger.debug(f'Packet received: {incoming_packet.__class__.__name__}')
+            if not incoming_packet:
                 continue
-            response_packet = incoming_packet.handle()
+            response_packet = incoming_packet.handle(self.packet_state)
             if not response_packet:
                 continue
-            self.connection_state = response_packet.next_connection_state
-            if not isinstance(response_packet, packet.CEmtpyPacket):
-                packet_bytes = response_packet.get_bytes()
-                output_stream.write(packet_bytes.read(packet_bytes.buffer_size))
-                output_stream.flush()
+            output_stream.write_packet(response_packet)
+            output_stream.flush()
+            logger.debug(f'Packet sent: {response_packet.__class__.__name__}')
 
-        logger.info('Connection is shutting down...')
+        logger.debug('Connection is shutting down...')
         input_stream.close()
         self.close()
 
