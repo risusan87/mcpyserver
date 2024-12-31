@@ -9,17 +9,19 @@ class PacketConnectionState:
 
         # Server level state
         self.online_mode = True
+        self.server_id = None
 
         # Connection level state
         self.state = ConnectionState.HANDSHAKE
         self.compress_threshold = -1
         self.client_ip = None
+        self.username = None
 
         # Encryption
         self.encryption_lock = Lock()
         self.encrypted = False
-        self.public_der = None
+        self.public_key = None
         self.private_key = None
         self.decrypt_cipher = None
         self.encrypt_cipher = None
-        self.verify_token = 0x01020304
+        self.verify_token = None
