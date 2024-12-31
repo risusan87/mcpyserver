@@ -3,7 +3,6 @@ import zlib
 from abc import ABC, abstractmethod
 
 from networking.data_type import BufferedPacket
-from networking.protocol import ConnectionState
 from networking.packet.packet_connection import PacketConnectionState
 
 class Packet(ABC):
@@ -17,37 +16,36 @@ class Packet(ABC):
 class ServerboundPacket(Packet):
 
     @abstractmethod
-    def handle(self, p_state: PacketConnectionState) -> ClientboundPacket:
+    def handle(self, p_state: PacketConnectionState) -> 'ClientboundPacket':
         pass
 
 
 class ClientboundPacket(Packet):
 
     @abstractmethod
-    def packet_body(self) -> BufferedPacket:
+    def packet_body(self, p_state: PacketConnectionState) -> BufferedPacket:
         '''
         This is the packet data without packet id. 
         Refered as "Data" in the documentation.
         '''
         pass
 
-    @property
-    @abstractmethod
-    def next_connection_state(self) -> ConnectionState:
-        pass
-
-    def get_bytes(self, compression_threshold=-1) -> BufferedPacket:
+    def get_bytes(self, p_state: PacketConnectionState, compression_threshold=-1) -> BufferedPacket:
         '''
         This is the final packet that will be sent to the client.
         Encrypt as required.
         '''
         packet_body = BufferedPacket(byte_order='big')
         packet_body.write_varint(self.packet_id)
-        packet_body.write(self.packet_body().read(self.packet_body().buffer_size))
+        p = self.packet_body(p_state)
+        packet_body.write(p.read(p.buffer_size))
         packet_body.flip()
         packet_body_length = packet_body.buffer_size
         pre_packet = BufferedPacket(byte_order='big')
-        if compression_threshold == -1 or packet_body_length < compression_threshold:
+        if compression_threshold == -1:
+            # send as compression disabled
+            pre_packet.write(packet_body.read(packet_body_length))
+        elif packet_body_length < compression_threshold:
             # send as uncompressed
             pre_packet.write_varint(0x00)
             pre_packet.write(packet_body.read(packet_body_length))
