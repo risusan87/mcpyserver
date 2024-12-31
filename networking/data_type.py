@@ -147,10 +147,13 @@ class BufferedPacket(ByteBuffer):
     
     def read_uuid(self) -> uuid:
         uuid_bytes = self.read(16)
-        return uuid.UUID(bytes=uuid_bytes)
+        return uuid.UUID(bytes=bytes(uuid_bytes))
     
     def write_bool(self, value: bool):
-        self.write(0x01 if value else 0x00)
+        if value == True:
+            self.write_uint8(1)
+        else:
+            self.write_uint8(0)
 
     def write_int8(self, value: int):
         if value < -128 or value > 127:
