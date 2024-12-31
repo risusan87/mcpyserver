@@ -1,4 +1,4 @@
-
+import os
 from threading import Lock
 
 from networking.protocol import ConnectionState
@@ -16,6 +16,7 @@ class PacketConnectionState:
         self.compress_threshold = -1
         self.client_ip = None
         self.username = None
+        self.unique_message_id = int.from_bytes(os.urandom(4), byteorder='big', signed=True)
 
         # Encryption
         self.encryption_lock = Lock()
