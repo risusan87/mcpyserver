@@ -3,3 +3,5 @@ __pycache__
 java_server
 .DS_Store
 resources
+
+test.py
