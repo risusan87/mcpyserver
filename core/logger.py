@@ -13,7 +13,7 @@ class Logger(logging.Logger):
 
         # Create console handler
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.DEBUG)
 
         # Create file handler
         file_handler = logging.FileHandler('resources/logs/app.log')
