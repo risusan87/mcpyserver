@@ -12,7 +12,7 @@ from networking.packet.server_bound import login as s_login
 from networking.packet.packet_connection import PacketConnectionState
 
 from networking.data_type import ByteBuffer, BufferedPacket
-from logger import logger
+from core.logger import logger
 from networking.protocol import ConnectionState, ProtocolVersion
 from networking.exception import ProtocolError, DataCorruptedError
 
@@ -172,13 +172,24 @@ class MCPacketInputStream(ConnectionInputStream):
                 verify_token_length = secured_packet.read_varint()
                 verify_token = secured_packet.read(verify_token_length)
                 return s_login.SEncryptionResponse(shared_secret, verify_token)
+            elif id == 0x02: # Login Plugin Response
+                message_id = secured_packet.read_varint()
+                successful = secured_packet.read_bool()
+                payload = secured_packet.read(secured_packet.length() - secured_packet.pos())
+                return s_login.SLoginPluginResponse(
+                    message_id=message_id,
+                    successful=successful,
+                    data=payload
+                )
             elif id == 0x03: # Login acknowledged
                 return s_login.SLoginAcknowledged()
             else:
                 raise Exception('Invalid packet id')
         
+        ### Configuration ###
         elif p_state.state == ConnectionState.CONFIGURATION:
             id = secured_packet.read_varint()
+            logger.debug(f'Configuration packet id: {id}')
             raise Exception('Not implemented')
         else:
             raise Exception('Invalid state')

@@ -4,7 +4,7 @@ import threading
 from datetime import datetime
 from typing import List
 
-from logger import logger
+from core.logger import logger
 import networking.packet as packet
 from networking.socket_io import MCPacketInputStream, MCPacketOutputStream
 from networking.protocol import ConnectionState

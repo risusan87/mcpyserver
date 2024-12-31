@@ -2,7 +2,7 @@
 import os
 import threading
 
-from logger import logger
+from core.logger import logger
 from networking import stop_server
 
 def _command_listener():

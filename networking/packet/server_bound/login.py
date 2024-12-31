@@ -81,7 +81,18 @@ class SEncryptionResponse(ServerboundPacket):
 
 
 class SLoginPluginResponse(ServerboundPacket):
-    pass
+    def __init__(self, message_id: int, successful: bool, data: bytes):
+        self.message_id = message_id
+        self.successful = successful
+        self.data = data
+    
+    @property
+    def packet_id(self):
+        return 0x02
+    
+    def handle(self, p_state: PacketConnectionState) -> None:
+        # TODO: Implement this for custom handshake
+        return None
 
 class SLoginAcknowledged(ServerboundPacket):
     @property

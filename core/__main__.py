@@ -1,7 +1,7 @@
 
 import networking
-from logger import logger
-from console import start_command_listener
+from core.logger import logger
+from core.console import start_command_listener
 
 _version = '0.0.1'
 
