@@ -2,6 +2,7 @@
 import uuid
 import requests
 
+from core.logger import logger
 import networking.packet.client_bound.login as login
 from networking.packet import ServerboundPacket
 from networking.packet.packet_connection import PacketConnectionState
@@ -81,18 +82,35 @@ class SEncryptionResponse(ServerboundPacket):
 
 
 class SLoginPluginResponse(ServerboundPacket):
+    '''
+    For custom server/client handshake
+    Notchian client always responds with successful = False, indicates client hasn't understood the request
+    S -> C: LoginPluginRequest
+    C -> S: LoginPluginResponse (This)
+    '''
     def __init__(self, message_id: int, successful: bool, data: bytes):
-        self.message_id = message_id
-        self.successful = successful
-        self.data = data
+        self._message_id = message_id
+        self._successful = successful
+        self._data = data
     
     @property
     def packet_id(self):
         return 0x02
     
     def handle(self, p_state: PacketConnectionState) -> None:
-        # TODO: Implement this for custom handshake
+        if p_state.unique_message_id != self._message_id:
+            raise ValueError('Message ID mismatch')
+        if not self._successful:
+            logger.warning('Login plugin response at login state (id = 0x02) responded with unsuccessful. Aborting.')
+            return None
+        # TODO: Implement this for custom handshake, however this is not necessary for the notchian client.
         return None
+    
+    def get_data(self) -> bytes:
+        '''
+        Call handle() first before calling this method.
+        '''
+        return self._data
 
 class SLoginAcknowledged(ServerboundPacket):
     @property
@@ -104,4 +122,21 @@ class SLoginAcknowledged(ServerboundPacket):
         return None
 
 class SCookieResponse(ServerboundPacket):
-    pass
+    def __init__(self, cookie_identifier: str, payload: bytes):
+        self._cookie_identifier = cookie_identifier
+        self._payload = payload
+
+    @property
+    def packet_id(self):
+        return 0x04
+    
+    def handle(self, p_state: PacketConnectionState) -> None:
+        return None
+    
+    def get_payload(self):
+        '''
+        handle() is NOT necessary to call before this method.
+        '''
+        if self._payload:
+            return self._cookie_identifier, self._payload
+        return None

@@ -87,7 +87,38 @@ class CSetCompression(ClientboundPacket):
     pass
 
 class CLoginPluginRequest(ClientboundPacket):
-    pass
+    '''
+    For custom server/client handshake
+    Notchian client always responds with successful = False, indicates client hasn't understood the request
+    S -> C: LoginPluginRequest (This)
+    C -> S: LoginPluginResponse
+    '''
+    def __init__(self, channel: str, data: bytes):
+        self._channel = channel
+        self._data = data
 
-class CCookieRequestAtLogin(ClientboundPacket):
-    pass
+    @property
+    def packet_id(self):
+        return 0x04
+    
+    def packet_body(self, p_state: PacketConnectionState) -> BufferedPacket:
+        body = BufferedPacket()
+        body.write_varint(p_state.unique_message_id)
+        body.write_utf8_string(self._channel, 32767)
+        body.write(self._data)
+        body.flip()
+        return body
+
+class CCookieRequest(ClientboundPacket):
+    def __init__(self, cookie_identifier: str):
+        self._cookie = cookie_identifier
+
+    @property
+    def packet_id(self):
+        return 0x05
+    
+    def packet_body(self, p_state: PacketConnectionState) -> BufferedPacket:
+        body = BufferedPacket()
+        body.write_utf8_string(self._cookie, 32767)
+        body.flip()
+        return body
