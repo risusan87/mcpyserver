@@ -9,6 +9,7 @@ import networking.packet as packet
 from networking.packet.server_bound import handshake as s_handshake
 from networking.packet.server_bound import status as s_status
 from networking.packet.server_bound import login as s_login
+from networking.packet.server_bound import configuration as s_config
 from networking.packet.packet_connection import PacketConnectionState
 
 from networking.data_type import ByteBuffer, BufferedPacket
@@ -33,7 +34,7 @@ class ConnectionInputStream:
 
         # Start read thread
         self._socket.settimeout(0.1)
-        self._input_thread = threading.Thread(target=self._read_data)
+        self._input_thread = threading.Thread(target=self._read_data, name=f'ConnectionListener-{p_state.connection_id}-InputStream')
         self._input_thread.start()
         
 
@@ -54,7 +55,8 @@ class ConnectionInputStream:
             with self._p_state.encryption_lock:
                 if self._p_state.encrypted:
                     cipher: CipherContext = self._p_state.decrypt_cipher
-                    data = cipher.update(data) + cipher.finalize()
+                    data = cipher.update(data)
+            logger.debug(f'Received {data}')
             with self._buffer_lock:
                 new_buffer = ByteBuffer(byte_order='big')
                 old_buffer_data = self._buffer.buffer.copy()[self._buffer.position:]
@@ -109,7 +111,7 @@ class MCPacketInputStream(ConnectionInputStream):
     
     def read_packet(self, p_state: PacketConnectionState) -> packet.ServerboundPacket:
         '''
-        All packet flow is handled here !!!
+        All client initiated packet flow is handled here !!!
         TODO: Implement all packet types <- IN PROGRESS
         TODO: Implement better error handling
         TODO:   
@@ -120,6 +122,9 @@ class MCPacketInputStream(ConnectionInputStream):
             ProtocolError: When an incoming packet is invalid in some way
             DataCorruptedError: When the incoming packet is corrupted at lower level
         '''
+        # TODO: Implement timeout
+        while self.available() == 0:
+            pass
         length = self.read_varint()
         if length > self.available():
             logger.warning(f'Packet length {length} exceeds available data {self.available()}')
@@ -189,8 +194,26 @@ class MCPacketInputStream(ConnectionInputStream):
         ### Configuration ###
         elif p_state.state == ConnectionState.CONFIGURATION:
             id = secured_packet.read_varint()
-            logger.debug(f'Configuration packet id: {id}')
-            raise Exception('Not implemented')
+            if id == 0x00: # Client Information
+                return s_config.SClientInformation(
+                    locale=secured_packet.read_utf8_string(16),
+                    view_distance=secured_packet.read_int8(),
+                    chat_mode=secured_packet.read_varint(),
+                    chat_colors=secured_packet.read_bool(),
+                    displayed_skin_parts=secured_packet.read_uint8(),
+                    main_hand=secured_packet.read_varint(),
+                    enable_text_filtering=secured_packet.read_bool(),
+                    allow_server_listings=secured_packet.read_bool()
+                )
+            elif id == 0x02: # Plugin Message
+                channel = secured_packet.read_utf8_string(32767)
+                data = secured_packet.read(secured_packet.length() - secured_packet.pos())
+                logger.debug(f'Plugin message received: {channel}')
+                return s_config.SPluginMessage(channel, data)
+            elif id == 0x03: # Finish Configuration Acknowledged
+                return s_config.SFinishConfigurationAcknowledged()
+            else:
+                raise Exception(f'Not implemented: {id}')
         else:
             raise Exception('Invalid state')
     
@@ -219,5 +242,5 @@ class MCPacketOutputStream(ConnectionOutputStream):
         with self._p_state.encryption_lock:
             if self._p_state.encrypted:
                 cipher: CipherContext = self._p_state.encrypt_cipher
-                packet_content = cipher.update(packet_content) + cipher.finalize()
+                packet_content = cipher.update(packet_content)
         self.write(packet_content)
