@@ -25,6 +25,7 @@ class SLoginStart(ServerboundPacket):
         return 0x00
     
     def handle(self, p_state: PacketConnectionState) -> login.CEncryptionRequest:
+        logger.info(f'Connection from {p_state.client_ip} is logging in as {self._username}', log_thread=False)
         p_state.username = self._username
         return login.CEncryptionRequest(online_mode=p_state.online_mode)
     
