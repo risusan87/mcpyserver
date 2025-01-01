@@ -1,5 +1,7 @@
 
 from networking.packet import ClientboundPacket
+from networking.packet.packet_connection import PacketConnectionState
+from networking.data_type import BufferedPacket
 
 ###
 # Client bound configuration packets
@@ -14,7 +16,12 @@ class CDisconnect(ClientboundPacket):
     pass
 
 class CFinishConfiguration(ClientboundPacket):
-    pass
+    @property
+    def packet_id(self):
+        return 0x03
+    
+    def packet_body(self, p_state: PacketConnectionState) -> BufferedPacket:
+        return BufferedPacket()
 
 class CKeepAlive(ClientboundPacket):
     pass
