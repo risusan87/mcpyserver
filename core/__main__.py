@@ -14,6 +14,7 @@ def main():
     # Start Command listener daemon
     start_command_listener()
             
-
+from minecraft_py.level.region import Region
 if __name__ == "__main__":
-    main()
+    r = Region(0, 0)
+    r.load()

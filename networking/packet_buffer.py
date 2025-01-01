@@ -1,72 +1,7 @@
 import struct
 import uuid
 
-class ByteBuffer:
-
-    def __init__(self, byte_order='big'):
-        """
-        Parameters:
-        byte_order (str): The byte order of the buffer. Can be either 'little' or 'big'. Defaults to 'little.
-        """
-        self.buffer = bytearray()
-        self.position = 0
-        self.buffer_size = 0
-        self.byte_order = byte_order
-    
-    def _byte_order_notation(self):
-        return '<' if self.byte_order == 'little' else '>'
-    
-    def _shift_position(self, shift: int, read: bool):
-        self.position += shift
-        if not read:
-            self.buffer_size += shift
-
-    def wrap(self, data, auto_flip=False) -> 'ByteBuffer':
-        if isinstance(data, bytes):
-            self.buffer = bytearray(data)
-        elif isinstance(data, bytearray):
-            self.buffer = data.copy()
-        elif isinstance(data, ByteBuffer):
-            self.buffer = data.buffer.copy()
-            if self.byte_order != data.byte_order:
-                data.buffer.reverse()
-        self.buffer_size = len(self.buffer)
-        self.position = 0 if auto_flip else self.buffer_size - 1
-        return self
-
-    def flip(self):
-        self.position = 0
-
-    def write(self, data: bytes, auto_flip=False):
-        '''
-        Write always appends data at the end of the buffer.
-        '''
-        if self.byte_order == 'little':
-            self.buffer.reverse()
-        self.buffer.extend(data)
-        if self.byte_order == 'little':
-            self.buffer.reverse()
-        self._shift_position(len(data), False)
-        if auto_flip:
-            self.flip()
-    
-    def read(self, size: int):
-        """
-        Read data is always immutable.
-        """
-        if self.byte_order == 'little':
-            self.buffer.reverse()
-        data = self.buffer[self.position:self.position + size].copy()
-        if self.byte_order == 'little':
-            self.buffer.reverse()
-        self._shift_position(size, True)
-        return data
-    
-    def pos(self):
-        return self.position
-    
-    def length(self):
-        return self.buffer_size
+from core.buffer import ByteBuffer
 
 class BufferedPacket(ByteBuffer):
     '''
