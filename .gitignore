@@ -2,6 +2,6 @@
 __pycache__
 java_server
 .DS_Store
-resources
+resources/logs
 
 test.py
