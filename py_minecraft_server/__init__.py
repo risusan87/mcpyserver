@@ -1,0 +1,3 @@
+
+class MinecraftServer:
+    pass

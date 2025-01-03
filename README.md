@@ -7,3 +7,7 @@ https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge
 
 For notchian network protocol, there is a rich documentation:
 https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Protocol
+
+
+Package `logical` is the dedicated server and contains minecraft logics defined in Notchian net.minecraft.server. 
+

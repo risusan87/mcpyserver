@@ -4,16 +4,15 @@ from typing import List
 
 from networking.packet import ClientboundPacket
 from networking.protocol import ConnectionState, ProtocolVersion
-from networking.data_type import BufferedPacket
+from networking.packet_buffer import BufferedPacket
 from networking.packet.packet_connection import PacketConnectionState
-from minecraft_py.player import PlayerMP
 
 ###
 # packet departure
 ###
 class CStatusResponse(ClientboundPacket):
     
-    def __init__(self, version: ProtocolVersion, max_players: int, online_players: int, sample_players: List[PlayerMP], description: str, enforce_secure_chat: bool):
+    def __init__(self, version: ProtocolVersion, max_players: int, online_players: int, sample_players: List, description: str, enforce_secure_chat: bool):
         # Modern notchain server (MC 1.7+, specifically 13w41a and above):
         # TODO: Support favicon
         self._response = {

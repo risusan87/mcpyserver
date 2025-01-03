@@ -1,7 +1,7 @@
 
 from networking.packet import ClientboundPacket
 from networking.packet.packet_connection import PacketConnectionState
-from networking.data_type import BufferedPacket
+from networking.packet_buffer import BufferedPacket
 
 ###
 # Client bound configuration packets

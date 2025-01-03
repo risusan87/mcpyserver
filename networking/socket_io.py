@@ -12,7 +12,7 @@ from networking.packet.server_bound import login as s_login
 from networking.packet.server_bound import configuration as s_config
 from networking.packet.packet_connection import PacketConnectionState
 
-from networking.data_type import ByteBuffer, BufferedPacket
+from networking.packet_buffer import ByteBuffer, BufferedPacket
 from core.logger import logger
 from networking.protocol import ConnectionState, ProtocolVersion
 from networking.exception import ProtocolError, DataCorruptedError

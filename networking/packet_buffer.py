@@ -1,7 +1,7 @@
 import struct
 import uuid
 
-from core.buffer import ByteBuffer
+from core.io import ByteBuffer
 
 class BufferedPacket(ByteBuffer):
     '''

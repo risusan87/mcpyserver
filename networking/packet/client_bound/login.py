@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives import serialization
 
 from networking.packet import ClientboundPacket
 from networking.packet.packet_connection import PacketConnectionState
-from networking.data_type import BufferedPacket
+from networking.packet_buffer import BufferedPacket
 from networking.mc_crypto import gen_rsa_key_pair, encode_public_key_der
 
 # Very fancy!!!

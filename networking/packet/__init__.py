@@ -2,7 +2,7 @@
 import zlib
 from abc import ABC, abstractmethod
 
-from networking.data_type import BufferedPacket
+from networking.packet_buffer import BufferedPacket
 from networking.packet.packet_connection import PacketConnectionState
 
 class Packet(ABC):
