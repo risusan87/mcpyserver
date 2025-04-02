@@ -1,8 +1,8 @@
-# mcpyserver
+# MC Py Server
 
-Mimics the official minecraft server written in Java, which commonly refered as the "Notchian" server in python, Just for fun!!!
+Mimics the official minecraft server written in Java, "Notchian" server, in python.
 
-For notchian minecraft logic, refer to wikipedia projects (?):
+For notchian minecraft logic, refer to wikipedia projects:
 https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge
 
 For notchian network protocol, there is a rich documentation:
