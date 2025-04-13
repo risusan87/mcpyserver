@@ -3,5 +3,8 @@ __pycache__
 java_server
 .DS_Store
 resources/logs
+resources/level
+resources/region
 
 test.py
+
