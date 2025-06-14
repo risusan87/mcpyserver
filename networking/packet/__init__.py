@@ -5,6 +5,12 @@ from abc import ABC, abstractmethod
 from networking.data_type import BufferedPacket
 from networking.packet.packet_connection import PacketConnectionState
 
+'''
+All packets including both serverbound and clientbound must have packet_id property.
+All packets including both serverbound and clientbound must have packet_body method.
+Server packets that require response back to client must have handle method.
+'''
+
 class Packet(ABC):
     
     @property
