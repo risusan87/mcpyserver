@@ -13,6 +13,9 @@ class ByteBuffer:
         self.buffer_size = 0
         self.byte_order = byte_order
     
+    def __str__(self):
+        return f'ByteBuffer(position={self.position}, buffer_size={self.buffer_size}, byte_order={self.byte_order})'
+    
     def _byte_order_notation(self):
         return '<' if self.byte_order == 'little' else '>'
     
@@ -37,20 +40,23 @@ class ByteBuffer:
     def flip(self):
         self.position = 0
 
-    def write(self, data: bytes, auto_flip=False):
+    def write(self, data: bytes | int, auto_flip=False) -> 'ByteBuffer':
         '''
         Write always appends data at the end of the buffer.
         '''
         if self.byte_order == 'little':
             self.buffer.reverse()
+        if isinstance(data, int):
+            data = bytes([data])
         self.buffer.extend(data)
         if self.byte_order == 'little':
             self.buffer.reverse()
         self._shift_position(len(data), False)
         if auto_flip:
             self.flip()
+        return self
     
-    def read(self, size: int):
+    def read(self, size: int) -> bytes:
         """
         Read data is always immutable.
         """
