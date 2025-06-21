@@ -59,7 +59,7 @@ class ConnectionInputStream:
             logger.debug(f'Received {data}')
             with self._buffer_lock:
                 new_buffer = ByteBuffer(byte_order='big')
-                old_buffer_data = self._buffer.buffer.copy()[self._buffer.position:]
+                old_buffer_data = self._buffer.buffer.getvalue()[self._buffer.position:]
                 new_buffer.wrap(old_buffer_data, auto_flip=False)
                 new_buffer.write(data)
                 new_buffer.flip()
