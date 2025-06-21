@@ -6,7 +6,7 @@ class ByteBuffer:
     def __init__(self, byte_order='big'):
         """
         Parameters:
-        byte_order (str): The byte order of the buffer. Can be either 'little' or 'big'. Defaults to 'little.
+        byte_order (str): The byte order of the buffer. Can be either 'little' or 'big'. Defaults to 'big'.
         """
         self.buffer = bytearray()
         self.position = 0
