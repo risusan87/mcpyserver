@@ -1,17 +1,15 @@
 import struct
 import uuid
+import io
 
 class ByteBuffer:
 
     def __init__(self, byte_order='big'):
-        """
-        Parameters:
-        byte_order (str): The byte order of the buffer. Can be either 'little' or 'big'. Defaults to 'little.
-        """
-        self.buffer = bytearray()
+        """Simple byte buffer backed by :class:`io.BytesIO`."""
+        self.byte_order = byte_order
+        self.buffer = io.BytesIO()
         self.position = 0
         self.buffer_size = 0
-        self.byte_order = byte_order
     
     def _byte_order_notation(self):
         return '<' if self.byte_order == 'little' else '>'
@@ -22,45 +20,43 @@ class ByteBuffer:
             self.buffer_size += shift
 
     def wrap(self, data, auto_flip=False) -> 'ByteBuffer':
-        if isinstance(data, bytes):
-            self.buffer = bytearray(data)
-        elif isinstance(data, bytearray):
-            self.buffer = data.copy()
-        elif isinstance(data, ByteBuffer):
-            self.buffer = data.buffer.copy()
+        if isinstance(data, ByteBuffer):
+            raw = data.buffer.getvalue()
             if self.byte_order != data.byte_order:
-                data.buffer.reverse()
-        self.buffer_size = len(self.buffer)
-        self.position = 0 if auto_flip else self.buffer_size - 1
+                raw = raw[::-1]
+        elif isinstance(data, (bytes, bytearray)):
+            raw = bytes(data)
+        else:
+            raise TypeError('Unsupported data type')
+
+        self.buffer = io.BytesIO(raw)
+        self.buffer_size = len(raw)
+        if auto_flip:
+            self.position = 0
+            self.buffer.seek(0)
+        else:
+            self.position = self.buffer_size
+            self.buffer.seek(self.buffer_size)
         return self
 
     def flip(self):
+        self.buffer.seek(0)
         self.position = 0
 
     def write(self, data: bytes, auto_flip=False):
-        '''
-        Write always appends data at the end of the buffer.
-        '''
-        if self.byte_order == 'little':
-            self.buffer.reverse()
-        self.buffer.extend(data)
-        if self.byte_order == 'little':
-            self.buffer.reverse()
+        """Append ``data`` to the buffer."""
+        self.buffer.seek(0, io.SEEK_END)
+        self.buffer.write(data)
         self._shift_position(len(data), False)
         if auto_flip:
             self.flip()
     
     def read(self, size: int):
-        """
-        Read data is always immutable.
-        """
-        if self.byte_order == 'little':
-            self.buffer.reverse()
-        data = self.buffer[self.position:self.position + size].copy()
-        if self.byte_order == 'little':
-            self.buffer.reverse()
-        self._shift_position(size, True)
-        return data
+        """Read ``size`` bytes from the current position."""
+        self.buffer.seek(self.position)
+        data = self.buffer.read(size)
+        self._shift_position(len(data), True)
+        return bytearray(data)
     
     def pos(self):
         return self.position
