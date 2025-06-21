@@ -35,13 +35,13 @@ class ConnectionListener:
                 self.connections.append(con)
 
         logger.info('Connection listener is shutting down...')
-        for connection in self.connections:
+        with self.connection_list_lock:
+            active_connections = list(self.connections)
+        for connection in active_connections:
             connection: Connection = connection
             connection.interrupt()
-        for connection in self.connections:
+        for connection in active_connections:
             connection.join()
-            with self.connection_list_lock:
-                self.connections.remove(connection)
         
         self.server.close()
         logger.info('Terminating listener')
