@@ -100,7 +100,7 @@ class Connection:
     def send_packet(self, *clientbound_packets: packet.ClientboundPacket) -> packet.ServerboundPacket:
         '''
         Queue packets to be sent to the client.
-        Packets given in this function are guranteed to be sent in the order they are given as soon as next opportunity within network flow is available, and receives a response from the client.
+        Packets given in this function are guaranteed to be sent in the order they are given as soon as next opportunity within network flow is available, and receives a response from the client.
 
         Packets can be sent as a bundle as long as it won't break the protocol.
         Generally, bundle packets are only acceptable in play state, where packets are surrounded by bundle delimiters (id = 0x00).
