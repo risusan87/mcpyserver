@@ -105,6 +105,48 @@ class NBTBase(ABC):
         name = payload.read(name_length).decode('utf-8')
         return cls(name=name)
 
+
+class ArrayTag(NBTBase):
+    """Common parent for array-like tags."""
+
+    def __init__(self, name: str | None = None, value: list | None = None):
+        super().__init__(name, value if value is not None else [])
+
+    def _check_value(self, value: list):
+        if not isinstance(value, list):
+            raise ValueError("Array tag value must be a list")
+        for element in value:
+            self._check_element(element)
+
+    @abstractmethod
+    def _check_element(self, element: any):
+        pass
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        payload.write(len(self.value).to_bytes(4, byteorder="big", signed=True))
+        for element in self.value:
+            self._write_element(payload, element)
+        return payload
+
+    @abstractmethod
+    def _write_element(self, payload: ByteBuffer, element: any):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _read_element(cls, payload: ByteBuffer) -> any:
+        pass
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> "ArrayTag":
+        tag = super().from_payload(payload)
+        length = int.from_bytes(payload.read(4), payload.byte_order, signed=True)
+        tag.value = []
+        for _ in range(length):
+            tag.value.append(cls._read_element(payload))
+        return tag
+
 @NBTBase.register_tag(0x00)
 class TagEnd(NBTBase):
     """
