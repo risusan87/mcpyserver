@@ -1,0 +1,79 @@
+import pytest
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from minecraft_py.nbt import (
+    TagByte,
+    TagShort,
+    TagCompound,
+    TagEnd,
+    read_nbt,
+    write_nbt,
+)
+from networking.data_type import ByteBuffer
+
+
+def roundtrip(tag):
+    payload = tag.to_payload()
+    result = read_nbt(payload, compressed=False)
+    return result
+
+
+class TestPrimitiveTags:
+    def test_tagbyte_roundtrip(self):
+        original = TagByte(name="a", value=5)
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagByte)
+        assert parsed.name == "a"
+        assert parsed.value == 5
+
+    def test_tagshort_roundtrip(self):
+        original = TagShort(name="b", value=12345)
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagShort)
+        assert parsed.name == "b"
+        assert parsed.value == 12345
+
+    @pytest.mark.parametrize("value", [128, -129, "x"])
+    def test_tagbyte_invalid(self, value):
+        with pytest.raises(ValueError):
+            TagByte(name="bad", value=value)
+
+    @pytest.mark.parametrize("value", [40000, -40000, "x"])
+    def test_tagshort_invalid(self, value):
+        with pytest.raises(ValueError):
+            TagShort(name="bad", value=value)
+
+    def test_to_snbt(self):
+        assert TagByte(name="b", value=1).to_snbt() == "b:1b"
+        assert TagShort(value=2).to_snbt() == "2s"
+
+
+class TestCompoundTag:
+    def test_compound_roundtrip(self):
+        inner = [TagByte(name="x", value=1), TagShort(name="y", value=2)]
+        original = TagCompound(name="root", value=inner)
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagCompound)
+        assert parsed.name == "root"
+        assert len(parsed.value) == 2
+        assert isinstance(parsed.value[0], TagByte)
+        assert parsed.value[0].value == 1
+        assert isinstance(parsed.value[1], TagShort)
+        assert parsed.value[1].value == 2
+
+    def test_compound_to_snbt(self):
+        tag = TagCompound(name="root", value=[TagByte(name="x", value=1)])
+        assert tag.to_snbt() == "root:{x:1b}"
+
+
+class TestReadWriteNbt:
+    def test_write_and_read_compressed(self):
+        tag = TagByte(name="c", value=3)
+        data = write_nbt(tag, compressed=True)
+        buf = ByteBuffer().wrap(data, auto_flip=True)
+        parsed = read_nbt(buf, compressed=True)
+        assert isinstance(parsed, TagByte)
+        assert parsed.value == 3

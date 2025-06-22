@@ -140,10 +140,11 @@ class TagByte(NBTBase):
         super().__init__(name, value)
     
     def _check_value(self, value: int):
-        if not isinstance(value, int):
-            raise ValueError("Byte value must be an integer")
-        if value is not None and (value < -128 or value > 127):
-            raise ValueError("Byte value must be between -128 and 127")
+        if value is not None:
+            if not isinstance(value, int):
+                raise ValueError("Byte value must be an integer")
+            if value < -128 or value > 127:
+                raise ValueError("Byte value must be between -128 and 127")
 
     def to_snbt(self) -> str:
         if self.value is None:
@@ -171,10 +172,11 @@ class TagShort(NBTBase):
         super().__init__(name, value)
 
     def _check_value(self, value: int):
-        if not isinstance(value, int):
-            raise ValueError("Short value must be an integer")
-        if value is not None and (value < -32768 or value > 32767):
-            raise ValueError("Short value must be between -32768 and 32767")
+        if value is not None:
+            if not isinstance(value, int):
+                raise ValueError("Short value must be an integer")
+            if value < -32768 or value > 32767:
+                raise ValueError("Short value must be between -32768 and 32767")
 
     def to_snbt(self) -> str:
         if self.value is None:
