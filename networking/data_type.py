@@ -6,7 +6,7 @@ class ByteBuffer:
     def __init__(self, byte_order='big'):
         """
         Parameters:
-        byte_order (str): The byte order of the buffer. Can be either 'little' or 'big'. Defaults to 'little.
+        byte_order (str): The byte order of the buffer. Can be either 'little' or 'big'. Defaults to 'big'.
         """
         self.buffer = bytearray()
         self.position = 0
@@ -111,10 +111,13 @@ class BufferedPacket(ByteBuffer):
         shift = 0
         while True:
             b = self.read_uint8()
-            result |= (b & 127) << shift
-            shift += 7
-            if not b & 128:
+            result |= (b & 0x7F) << shift
+            if not b & 0x80:
                 break
+            shift += 7
+        # convert from unsigned to signed 32-bit value
+        if result & 0x80000000:
+            result -= 0x100000000
         return result
     
     def read_varlong(self):
@@ -122,10 +125,12 @@ class BufferedPacket(ByteBuffer):
         shift = 0
         while True:
             b = self.read_uint8()
-            result |= (b & 127) << shift
-            shift += 7
-            if not b & 128:
+            result |= (b & 0x7F) << shift
+            if not b & 0x80:
                 break
+            shift += 7
+        if result & 0x8000000000000000:
+            result -= 0x10000000000000000
         return result
 
     def read_utf8_string(self, n: int) -> str:
@@ -200,22 +205,28 @@ class BufferedPacket(ByteBuffer):
     def write_varint(self, value: int):
         if value < -2147483648 or value > 2147483647:
             raise ValueError('Int value out of range')
+        unsigned = value & 0xFFFFFFFF
         while True:
-            if (value & -128) == 0:
-                self.write_uint8(value)
-                return
-            self.write_uint8(value & 127 | 128)
-            value = value >> 7
+            temp = unsigned & 0x7F
+            unsigned >>= 7
+            if unsigned != 0:
+                temp |= 0x80
+            self.write_uint8(temp)
+            if unsigned == 0:
+                break
     
     def write_varlong(self, value: int):
         if value < -9223372036854775808 or value > 9223372036854775807:
             raise ValueError('Long value out of range')
+        unsigned = value & 0xFFFFFFFFFFFFFFFF
         while True:
-            if (value & -128) == 0:
-                self.write_uint8(value)
-                return
-            self.write_uint8(value & 127 | 128)
-            value = value >> 7
+            temp = unsigned & 0x7F
+            unsigned >>= 7
+            if unsigned != 0:
+                temp |= 0x80
+            self.write_uint8(temp)
+            if unsigned == 0:
+                break
 
     def write_utf8_string(self, string: str, n: int):
         if n > 32767:

@@ -35,13 +35,13 @@ class ConnectionListener:
                 self.connections.append(con)
 
         logger.info('Connection listener is shutting down...')
-        for connection in self.connections:
+        with self.connection_list_lock:
+            active_connections = list(self.connections)
+        for connection in active_connections:
             connection: Connection = connection
             connection.interrupt()
-        for connection in self.connections:
+        for connection in active_connections:
             connection.join()
-            with self.connection_list_lock:
-                self.connections.remove(connection)
         
         self.server.close()
         logger.info('Terminating listener')
@@ -100,7 +100,7 @@ class Connection:
     def send_packet(self, *clientbound_packets: packet.ClientboundPacket) -> packet.ServerboundPacket:
         '''
         Queue packets to be sent to the client.
-        Packets given in this function are guranteed to be sent in the order they are given as soon as next opportunity within network flow is available, and receives a response from the client.
+        Packets given in this function are guaranteed to be sent in the order they are given as soon as next opportunity within network flow is available, and receives a response from the client.
 
         Packets can be sent as a bundle as long as it won't break the protocol.
         Generally, bundle packets are only acceptable in play state, where packets are surrounded by bundle delimiters (id = 0x00).
