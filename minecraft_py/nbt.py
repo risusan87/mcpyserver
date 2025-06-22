@@ -253,6 +253,35 @@ class TagFloat(NBTBase):
         tag.value = struct.unpack(f'{payload._byte_order_notation()}f', payload.read(4))[0]
         return tag
 
+@NBTBase.register_tag(0x06)
+class TagDouble(NBTBase):
+    """Represents a double precision floating point NBT tag."""
+
+    def __init__(self, name: str = None, value: float = None):
+        super().__init__(name, value)
+
+    def _check_value(self, value: float):
+        if value is None:
+            return
+        if not isinstance(value, (int, float)):
+            raise ValueError("Double value must be a float")
+
+    def to_snbt(self) -> str:
+        if self.value is None:
+            return None
+        return f'{self.name}:{float(self.value)}d' if self.name else f'{float(self.value)}d'
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        payload.write(struct.pack('>d', float(self.value)), auto_flip=True)
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> 'TagDouble':
+        tag = super().from_payload(payload)
+        tag.value = struct.unpack('>d', payload.read(8))[0]
+        return tag
+
 @NBTBase.register_tag(0x0A)
 class TagCompound(NBTBase):
     """
