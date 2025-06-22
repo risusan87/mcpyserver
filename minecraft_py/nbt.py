@@ -162,6 +162,36 @@ class TagByte(NBTBase):
         tag.value = value - 256 if value > 127 else value
         return tag
 
+@NBTBase.register_tag(0x02)
+class TagShort(NBTBase):
+    """
+    Represents a short NBT tag.
+    """
+    def __init__(self, name: str=None, value: int=None):
+        super().__init__(name, value)
+
+    def _check_value(self, value: int):
+        if not isinstance(value, int):
+            raise ValueError("Short value must be an integer")
+        if value is not None and (value < -32768 or value > 32767):
+            raise ValueError("Short value must be between -32768 and 32767")
+
+    def to_snbt(self) -> str:
+        if self.value is None:
+            return None
+        return f'{self.name}:{self.value}s' if self.name else f'{self.value}s'
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        payload.write(self.value.to_bytes(2, byteorder='big', signed=True), auto_flip=True)
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> 'TagShort':
+        tag = super().from_payload(payload)
+        tag.value = int.from_bytes(payload.read(2), payload.byte_order, signed=True)
+        return tag
+
 @NBTBase.register_tag(0x0A)
 class TagCompound(NBTBase):
     """
