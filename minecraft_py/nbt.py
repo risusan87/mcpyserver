@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
 from gzip import GzipFile
+import struct
 
 from networking.data_type import ByteBuffer
 
@@ -221,6 +222,35 @@ class TagInt(NBTBase):
     def from_payload(cls, payload: ByteBuffer) -> 'TagInt':
         tag = super().from_payload(payload)
         tag.value = int.from_bytes(payload.read(4), byteorder='big', signed=True)
+        return tag
+
+@NBTBase.register_tag(0x05)
+class TagFloat(NBTBase):
+    """
+    Represents a float NBT tag.
+    """
+
+    def __init__(self, name: str=None, value: float=None):
+        super().__init__(name, value)
+
+    def _check_value(self, value: float):
+        if value is not None and not isinstance(value, (int, float)):
+            raise ValueError("Float value must be a numeric type")
+
+    def to_snbt(self) -> str:
+        if self.value is None:
+            return None
+        return f'{self.name}:{float(self.value)}f' if self.name else f'{float(self.value)}f'
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        payload.write(struct.pack(f'{payload._byte_order_notation()}f', float(self.value)), auto_flip=True)
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> 'TagFloat':
+        tag = super().from_payload(payload)
+        tag.value = struct.unpack(f'{payload._byte_order_notation()}f', payload.read(4))[0]
         return tag
 
 @NBTBase.register_tag(0x0A)
