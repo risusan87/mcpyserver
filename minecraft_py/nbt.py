@@ -349,6 +349,38 @@ class TagByteArray(NBTBase):
         tag.value = [b - 256 if b > 127 else b for b in data]
         return tag
 
+@NBTBase.register_tag(0x08)
+class TagString(NBTBase):
+    """Represents a string NBT tag."""
+
+    def __init__(self, name: str = None, value: str = None):
+        super().__init__(name, value)
+
+    def _check_value(self, value: str):
+        if value is not None and not isinstance(value, str):
+            raise ValueError("String value must be a string")
+
+    def to_snbt(self) -> str:
+        if self.value is None:
+            return None
+        escaped = self.value.replace('"', '\\"')
+        return f'{self.name}:"{escaped}"' if self.name else f'"{escaped}"'
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        value_bytes = self.value.encode('utf-8')
+        length = len(value_bytes).to_bytes(2, byteorder='big', signed=False)
+        payload.write(length)
+        payload.write(value_bytes, auto_flip=True)
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> 'TagString':
+        tag = super().from_payload(payload)
+        length = int.from_bytes(payload.read(2), payload.byte_order, signed=False)
+        tag.value = payload.read(length).decode('utf-8')
+        return tag
+
 @NBTBase.register_tag(0x0A)
 class TagCompound(NBTBase):
     """
