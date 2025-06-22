@@ -224,6 +224,35 @@ class TagInt(NBTBase):
         tag.value = int.from_bytes(payload.read(4), byteorder='big', signed=True)
         return tag
 
+@NBTBase.register_tag(0x04)
+class TagLong(NBTBase):
+    """Represents a 64-bit signed integer NBT tag."""
+
+    def __init__(self, name: str = None, value: int = None):
+        super().__init__(name, value)
+
+    def _check_value(self, value: int):
+        if not isinstance(value, int):
+            raise ValueError("Long value must be an integer")
+        if value is not None and (value < -9223372036854775808 or value > 9223372036854775807):
+            raise ValueError("Long value must be between -9223372036854775808 and 9223372036854775807")
+
+    def to_snbt(self) -> str:
+        if self.value is None:
+            return None
+        return f'{self.name}:{self.value}L' if self.name else f'{self.value}L'
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        payload.write(self.value.to_bytes(8, byteorder='big', signed=True), auto_flip=True)
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> 'TagLong':
+        tag = super().from_payload(payload)
+        tag.value = int.from_bytes(payload.read(8), byteorder=payload.byte_order, signed=True)
+        return tag
+    
 @NBTBase.register_tag(0x05)
 class TagFloat(NBTBase):
     """
