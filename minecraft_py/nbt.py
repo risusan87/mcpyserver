@@ -131,7 +131,7 @@ class TagEnd(NBTBase):
     def from_payload(cls, payload: bytes) -> 'TagEnd':
         return cls()
 
-@NBTBase.register_tag(0x01) 
+@NBTBase.register_tag(0x01)
 class TagByte(NBTBase):
     """
     Represents a byte NBT tag.
@@ -192,6 +192,35 @@ class TagShort(NBTBase):
     def from_payload(cls, payload: ByteBuffer) -> 'TagShort':
         tag = super().from_payload(payload)
         tag.value = int.from_bytes(payload.read(2), payload.byte_order, signed=True)
+        return tag
+
+@NBTBase.register_tag(0x03)
+class TagInt(NBTBase):
+    """Represents a 32-bit signed integer NBT tag."""
+
+    def __init__(self, name: str=None, value: int=None):
+        super().__init__(name, value)
+
+    def _check_value(self, value: int):
+        if not isinstance(value, int):
+            raise ValueError("Int value must be an integer")
+        if value is not None and (value < -2147483648 or value > 2147483647):
+            raise ValueError("Int value must be between -2147483648 and 2147483647")
+
+    def to_snbt(self) -> str:
+        if self.value is None:
+            return None
+        return f'{self.name}:{self.value}i' if self.name else f'{self.value}i'
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        payload.write(self.value.to_bytes(4, byteorder='big', signed=True), auto_flip=True)
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> 'TagInt':
+        tag = super().from_payload(payload)
+        tag.value = int.from_bytes(payload.read(4), byteorder='big', signed=True)
         return tag
 
 @NBTBase.register_tag(0x0A)
