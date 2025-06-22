@@ -282,6 +282,44 @@ class TagDouble(NBTBase):
         tag.value = struct.unpack('>d', payload.read(8))[0]
         return tag
 
+@NBTBase.register_tag(0x07)
+class TagByteArray(NBTBase):
+    """Represents a byte array NBT tag."""
+
+    def __init__(self, name: str=None, value: list=None):
+        super().__init__(name, value if value is not None else [])
+
+    def _check_value(self, value: list):
+        if not isinstance(value, list):
+            raise ValueError("ByteArray value must be a list")
+        for b in value:
+            if not isinstance(b, int):
+                raise ValueError("ByteArray elements must be integers")
+            if b < -128 or b > 127:
+                raise ValueError("ByteArray elements must be between -128 and 127")
+
+    def to_snbt(self) -> str:
+        snbt = ''
+        if self.name:
+            snbt = f'{self.name}:'
+        values = ','.join(f'{b}b' for b in self.value)
+        snbt += f'[B;{values}]'
+        return snbt
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        payload.write(len(self.value).to_bytes(4, byteorder=payload.byte_order, signed=True))
+        payload.write(bytes((b & 0xFF for b in self.value)), auto_flip=True)
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> 'TagByteArray':
+        tag = super().from_payload(payload)
+        length = int.from_bytes(payload.read(4), payload.byte_order, signed=True)
+        data = payload.read(length)
+        tag.value = [b - 256 if b > 127 else b for b in data]
+        return tag
+
 @NBTBase.register_tag(0x0A)
 class TagCompound(NBTBase):
     """
