@@ -16,9 +16,4 @@ def main():
             
 
 if __name__ == "__main__":
-    #main()
-    from minecraft_py import nbt
-
-    tag = nbt.TagCompound(name="This is the root tag you know")
-    tag.value.append(nbt.TagByte(name="hey its just a test", value=42))
-    print(tag)
+    main()
