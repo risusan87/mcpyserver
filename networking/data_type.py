@@ -19,25 +19,24 @@ class ByteBuffer:
         if not read:
             self.buffer_size += shift
 
-    def wrap(self, data, auto_flip=False) -> 'ByteBuffer':
+    @classmethod
+    def wrap(data) -> 'ByteBuffer':
+        """Wraps the given data into a ByteBuffer."""
+        buffer = ByteBuffer()
         if isinstance(data, ByteBuffer):
             raw = data.buffer.getvalue()
-            if self.byte_order != data.byte_order:
+            if buffer.byte_order != data.byte_order:
                 raw = raw[::-1]
         elif isinstance(data, (bytes, bytearray)):
             raw = bytes(data)
         else:
             raise TypeError('Unsupported data type')
 
-        self.buffer = io.BytesIO(raw)
-        self.buffer_size = len(raw)
-        if auto_flip:
-            self.position = 0
-            self.buffer.seek(0)
-        else:
-            self.position = self.buffer_size
-            self.buffer.seek(self.buffer_size)
-        return self
+        buffer.buffer = io.BytesIO(raw)
+        buffer.buffer_size = len(raw)
+        buffer.position = 0
+        buffer.buffer.seek(0)
+        return buffer
 
     def flip(self):
         self.buffer.seek(0)
