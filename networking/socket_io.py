@@ -58,9 +58,8 @@ class ConnectionInputStream:
                     data = cipher.update(data)
             logger.debug(f'Received {data}')
             with self._buffer_lock:
-                new_buffer = ByteBuffer(byte_order='big')
                 old_buffer_data = self._buffer.buffer.getvalue()[self._buffer.position:]
-                new_buffer.wrap(old_buffer_data, auto_flip=False)
+                new_buffer = ByteBuffer.wrap(old_buffer_data, byte_order='big', auto_flip=False)
                 new_buffer.write(data)
                 new_buffer.flip()
                 self._buffer = new_buffer
@@ -134,8 +133,7 @@ class MCPacketInputStream(ConnectionInputStream):
 
         # packets at this point maybe compressed <- FIXED: Compressed packets are handled in the packet class
         # never call self.read() beyond this point
-        secured_packet = BufferedPacket(byte_order='big')
-        secured_packet.wrap(content, auto_flip=True)
+        secured_packet = BufferedPacket.wrap(content, byte_order='big', auto_flip=True)
         
         ### Handshake ###
         if p_state.state == ConnectionState.HANDSHAKE:

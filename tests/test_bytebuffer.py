@@ -12,8 +12,7 @@ def test_write_and_read():
 
 
 def test_wrap_bytes_auto_flip():
-    buf = ByteBuffer()
-    buf.wrap(b'xyz', auto_flip=True)
+    buf = ByteBuffer.wrap(b'xyz', auto_flip=True)
     assert buf.read(3) == bytearray(b'xyz')
     assert buf.pos() == 3
     assert buf.length() == 3
@@ -23,8 +22,7 @@ def test_wrap_bytebuffer_byte_order():
     little = ByteBuffer(byte_order='little')
     little.write(b'\x01\x02')
     little.flip()
-    big = ByteBuffer(byte_order='big')
-    big.wrap(little, auto_flip=True)
+    big = ByteBuffer.wrap(little, byte_order='big', auto_flip=True)
     # when wrapping buffers of different byte order, data should be reversed
     assert big.read(2) == bytearray(b'\x02\x01')
 

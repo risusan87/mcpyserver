@@ -20,14 +20,23 @@ class ByteBuffer:
             self.buffer_size += shift
 
     @classmethod
-    def wrap(data) -> 'ByteBuffer':
-        """Wraps the given data into a ByteBuffer."""
-        buffer = ByteBuffer()
-        if isinstance(data, ByteBuffer):
-            raw = data.buffer.getvalue()
-            if buffer.byte_order != data.byte_order:
-                raw = raw[::-1]
-        elif isinstance(data, (bytes, bytearray)):
+    def wrap(cls, data, byte_order='big', auto_flip=False) -> 'ByteBuffer':
+        """Create a new :class:`ByteBuffer` wrapping ``data``.
+
+        ``data`` may be a :class:`ByteBuffer`, ``bytes`` or ``bytearray``. When
+        wrapping an existing :class:`ByteBuffer` with a different ``byte_order``
+        the data is reversed.
+        """
+
+            if byte_order != data.byte_order:
+        buf = cls(byte_order=byte_order)
+        buf.buffer = io.BytesIO(raw)
+        buf.buffer_size = len(raw)
+            buf.position = 0
+            buf.buffer.seek(0)
+            buf.position = buf.buffer_size
+            buf.buffer.seek(buf.buffer_size)
+        return buf
             raw = bytes(data)
         else:
             raise TypeError('Unsupported data type')
