@@ -9,6 +9,7 @@ from minecraft_py.nbt import (
     TagShort,
     TagIntArray,
     TagLongArray,
+    TagByteArray,
     TagCompound,
     TagEnd,
     read_nbt,
@@ -65,6 +66,20 @@ class TestPrimitiveTags:
         assert isinstance(parsed, TagLongArray)
         assert parsed.name == "longs"
         assert parsed.value == [1, 2, 3]
+
+
+class TestArrayTags:
+    def test_byte_array_roundtrip(self):
+        original = TagByteArray(name="arr", value=[1, -2, 3])
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagByteArray)
+        assert parsed.name == "arr"
+        assert parsed.value == [1, -2, 3]
+
+    @pytest.mark.parametrize("values", [[256], [-129], ["a"]])
+    def test_byte_array_invalid(self, values):
+        with pytest.raises(ValueError):
+            TagByteArray(name="bad", value=values)
 
 
 class TestCompoundTag:

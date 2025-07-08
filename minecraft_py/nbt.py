@@ -355,20 +355,25 @@ class TagDouble(NBTBase):
         return tag
 
 @NBTBase.register_tag(0x07)
-class TagByteArray(NBTBase):
+class TagByteArray(ArrayTag):
     """Represents a byte array NBT tag."""
 
-    def __init__(self, name: str=None, value: list=None):
-        super().__init__(name, value if value is not None else [])
+    def __init__(self, name: str | None = None, value: list | None = None):
+        super().__init__(name, value)
 
-    def _check_value(self, value: list):
-        if not isinstance(value, list):
-            raise ValueError("ByteArray value must be a list")
-        for b in value:
-            if not isinstance(b, int):
-                raise ValueError("ByteArray elements must be integers")
-            if b < -128 or b > 127:
-                raise ValueError("ByteArray elements must be between -128 and 127")
+    def _check_element(self, element: int):
+        if not isinstance(element, int):
+            raise ValueError("ByteArray elements must be integers")
+        if element < -128 or element > 127:
+            raise ValueError("ByteArray elements must be between -128 and 127")
+
+    def _write_element(self, payload: ByteBuffer, element: int):
+        payload.write(element & 0xFF)
+
+    @classmethod
+    def _read_element(cls, payload: ByteBuffer) -> int:
+        value = payload.read(1)[0]
+        return value - 256 if value > 127 else value
 
     def to_snbt(self) -> str:
         snbt = ''
@@ -380,17 +385,9 @@ class TagByteArray(NBTBase):
 
     def to_payload(self) -> ByteBuffer:
         payload = super().to_payload()
-        payload.write(len(self.value).to_bytes(4, byteorder=payload.byte_order, signed=True))
-        payload.write(bytes((b & 0xFF for b in self.value)), auto_flip=True)
+        payload.flip()
         return payload
 
-    @classmethod
-    def from_payload(cls, payload: ByteBuffer) -> 'TagByteArray':
-        tag = super().from_payload(payload)
-        length = int.from_bytes(payload.read(4), payload.byte_order, signed=True)
-        data = payload.read(length)
-        tag.value = [b - 256 if b > 127 else b for b in data]
-        return tag
 
 @NBTBase.register_tag(0x08)
 class TagString(NBTBase):
