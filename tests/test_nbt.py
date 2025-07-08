@@ -7,6 +7,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from minecraft_py.nbt import (
     TagByte,
     TagShort,
+    TagIntArray,
+    TagLongArray,
     TagCompound,
     TagEnd,
     read_nbt,
@@ -49,6 +51,20 @@ class TestPrimitiveTags:
     def test_to_snbt(self):
         assert TagByte(name="b", value=1).to_snbt() == "b:1b"
         assert TagShort(value=2).to_snbt() == "2s"
+
+    def test_tagintarray_roundtrip(self):
+        original = TagIntArray(name="ints", value=[1, 2, 3])
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagIntArray)
+        assert parsed.name == "ints"
+        assert parsed.value == [1, 2, 3]
+
+    def test_taglongarray_roundtrip(self):
+        original = TagLongArray(name="longs", value=[1, 2, 3])
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagLongArray)
+        assert parsed.name == "longs"
+        assert parsed.value == [1, 2, 3]
 
 
 class TestCompoundTag:

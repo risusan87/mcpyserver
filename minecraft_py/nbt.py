@@ -127,6 +127,7 @@ class ArrayTag(NBTBase):
         payload.write(len(self.value).to_bytes(4, byteorder="big", signed=True))
         for element in self.value:
             self._write_element(payload, element)
+        payload.flip()
         return payload
 
     @abstractmethod
@@ -472,6 +473,58 @@ class TagCompound(NBTBase):
                 break
             tag.value.append(next_tag)
         return tag
+
+
+@NBTBase.register_tag(0x0B)
+class TagIntArray(ArrayTag):
+    """Represents an int array NBT tag."""
+
+    def _check_element(self, element: int):
+        if not isinstance(element, int):
+            raise ValueError("IntArray elements must be integers")
+        if element < -2147483648 or element > 2147483647:
+            raise ValueError(
+                "IntArray elements must be between -2147483648 and 2147483647"
+            )
+
+    def _write_element(self, payload: ByteBuffer, element: int):
+        payload.write(element.to_bytes(4, byteorder="big", signed=True))
+
+    @classmethod
+    def _read_element(cls, payload: ByteBuffer) -> int:
+        return int.from_bytes(payload.read(4), payload.byte_order, signed=True)
+
+    def to_snbt(self) -> str:
+        snbt = f"{self.name}:" if self.name else ""
+        values = ",".join(str(v) for v in self.value)
+        snbt += f"[I;{values}]"
+        return snbt
+
+
+@NBTBase.register_tag(0x0C)
+class TagLongArray(ArrayTag):
+    """Represents a long array NBT tag."""
+
+    def _check_element(self, element: int):
+        if not isinstance(element, int):
+            raise ValueError("LongArray elements must be integers")
+        if element < -9223372036854775808 or element > 9223372036854775807:
+            raise ValueError(
+                "LongArray elements must be between -9223372036854775808 and 9223372036854775807"
+            )
+
+    def _write_element(self, payload: ByteBuffer, element: int):
+        payload.write(element.to_bytes(8, byteorder="big", signed=True))
+
+    @classmethod
+    def _read_element(cls, payload: ByteBuffer) -> int:
+        return int.from_bytes(payload.read(8), payload.byte_order, signed=True)
+
+    def to_snbt(self) -> str:
+        snbt = f"{self.name}:" if self.name else ""
+        values = ",".join(f"{v}L" for v in self.value)
+        snbt += f"[L;{values}]"
+        return snbt
 
 
             
