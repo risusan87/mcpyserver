@@ -425,6 +425,64 @@ class TagString(NBTBase):
         tag.value = payload.read(length).decode('utf-8')
         return tag
 
+@NBTBase.register_tag(0x09)
+class TagList(NBTBase):
+    """Represents a list NBT tag."""
+
+    def __init__(self, name: str | None = None, value: list | None = None, list_type: type | None = None):
+        self.list_type = list_type
+        super().__init__(name, value if value is not None else [])
+        if self.list_type is None:
+            self.list_type = TagEnd if not self.value else type(self.value[0])
+
+    def _check_value(self, value: list):
+        if not isinstance(value, list):
+            raise ValueError("List value must be a list")
+        if self.list_type is None:
+            self.list_type = TagEnd if not value else type(value[0])
+        for element in value:
+            if not isinstance(element, self.list_type):
+                raise ValueError("All list elements must be of the same type")
+            if element.name is not None:
+                raise ValueError("List elements must not have names")
+
+    def to_snbt(self) -> str:
+        snbt = f"{self.name}:" if self.name else ""
+        snbt += "["
+        if self.value:
+            snbt += ",".join(elem.to_snbt() for elem in self.value)
+        snbt += "]"
+        return snbt
+
+    def to_payload(self) -> ByteBuffer:
+        payload = super().to_payload()
+        element_id = self.list_type.nbt_tag_id if self.list_type else 0
+        payload.write(element_id)
+        payload.write(len(self.value).to_bytes(4, byteorder="big", signed=True))
+        for element in self.value:
+            elem_payload = element.to_payload().buffer
+            name_len = len(element.name.encode("utf-8")) if element.name else 0
+            header = 1 + 2 + name_len
+            payload.write(elem_payload[header:])
+        payload.flip()
+        return payload
+
+    @classmethod
+    def from_payload(cls, payload: ByteBuffer) -> "TagList":
+        tag = super().from_payload(payload)
+        element_id = payload.read(1)[0]
+        length = int.from_bytes(payload.read(4), payload.byte_order, signed=True)
+        tag.list_type = _tag_registry.get(element_id) if element_id != 0 else TagEnd
+        tag.value = []
+        for _ in range(length):
+            data = b"\x00\x00" + bytes(payload.buffer[payload.pos():])
+            tmp = ByteBuffer(byte_order=payload.byte_order).wrap(data, auto_flip=True)
+            element = tag.list_type.from_payload(tmp)
+            consumed = tmp.pos() - 2
+            payload.read(consumed)
+            tag.value.append(element)
+        return tag
+
 @NBTBase.register_tag(0x0A)
 class TagCompound(NBTBase):
     """

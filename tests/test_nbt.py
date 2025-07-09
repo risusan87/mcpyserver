@@ -10,6 +10,7 @@ from minecraft_py.nbt import (
     TagIntArray,
     TagLongArray,
     TagByteArray,
+    TagList,
     TagCompound,
     TagEnd,
     read_nbt,
@@ -98,6 +99,21 @@ class TestCompoundTag:
     def test_compound_to_snbt(self):
         tag = TagCompound(name="root", value=[TagByte(name="x", value=1)])
         assert tag.to_snbt() == "root:{x:1b}"
+
+
+class TestListTag:
+    def test_list_roundtrip(self):
+        original = TagList(name="list", value=[TagByte(value=1), TagByte(value=2)])
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagList)
+        assert parsed.name == "list"
+        assert len(parsed.value) == 2
+        assert parsed.value[0].value == 1
+        assert parsed.value[1].value == 2
+
+    def test_list_to_snbt(self):
+        tag = TagList(name="nums", value=[TagByte(value=1), TagByte(value=2)])
+        assert tag.to_snbt() == "nums:[1b,2b]"
 
 
 class TestReadWriteNbt:
