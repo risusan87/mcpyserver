@@ -7,6 +7,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from minecraft_py.nbt import (
     TagByte,
     TagShort,
+    TagInt,
+    TagLong,
+    TagFloat,
+    TagDouble,
+    TagString,
     TagIntArray,
     TagLongArray,
     TagByteArray,
@@ -124,3 +129,71 @@ class TestReadWriteNbt:
         parsed = read_nbt(buf, compressed=True)
         assert isinstance(parsed, TagByte)
         assert parsed.value == 3
+
+
+class TestEdgeCases:
+    def test_tag_end_invalid(self):
+        with pytest.raises(ValueError):
+            TagEnd(name="bad")
+        with pytest.raises(ValueError):
+            t = TagEnd()
+            t.value = 1
+
+    def test_tagstring_roundtrip_and_escape(self):
+        original = TagString(name="s", value='hello "mc"')
+        parsed = roundtrip(original)
+        assert isinstance(parsed, TagString)
+        assert parsed.value == 'hello "mc"'
+        assert parsed.to_snbt() == 's:"hello \\"mc\\""'
+
+    def test_taglist_invalid_mixed_types(self):
+        with pytest.raises(ValueError):
+            TagList(value=[TagByte(value=1), TagShort(value=2)])
+
+    def test_taglist_named_elements_invalid(self):
+        with pytest.raises(ValueError):
+            TagList(value=[TagByte(name="x", value=1)])
+
+    def test_taglist_empty_roundtrip(self):
+        tag = TagList(name="empty", value=[])
+        parsed = roundtrip(tag)
+        assert isinstance(parsed, TagList)
+        assert parsed.value == []
+        assert parsed.list_type is TagEnd
+
+    def test_list_type_mismatch(self):
+        with pytest.raises(ValueError):
+            TagList(list_type=TagByte, value=[TagShort(value=1)])
+
+    def test_compound_invalid_value(self):
+        with pytest.raises(ValueError):
+            TagCompound(name="bad", value="string")
+
+    def test_compound_nested(self):
+        inner = TagCompound(name="inner", value=[TagString(name="msg", value="hi")])
+        root = TagCompound(name="root", value=[inner])
+        parsed = roundtrip(root)
+        assert isinstance(parsed.value[0], TagCompound)
+        assert parsed.value[0].name == "inner"
+        assert isinstance(parsed.value[0].value[0], TagString)
+        assert parsed.value[0].value[0].value == "hi"
+
+    def test_unknown_tag_id(self):
+        buf = ByteBuffer()
+        buf.write(0xFF).write(b"\x00\x00", auto_flip=True)
+        with pytest.raises(ValueError):
+            read_nbt(buf, compressed=False)
+
+    def test_tag_int_boundaries(self):
+        for val in (-2147483648, 2147483647):
+            assert roundtrip(TagInt(name="i", value=val)).value == val
+
+    def test_tag_long_boundaries(self):
+        for val in (-9223372036854775808, 9223372036854775807):
+            assert roundtrip(TagLong(name="l", value=val)).value == val
+
+    def test_float_double_roundtrip(self):
+        ftag = TagFloat(name="f", value=1.25)
+        dtag = TagDouble(name="d", value=1.5)
+        assert roundtrip(ftag).value == pytest.approx(1.25)
+        assert roundtrip(dtag).value == pytest.approx(1.5)

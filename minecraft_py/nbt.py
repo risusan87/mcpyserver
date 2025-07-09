@@ -250,9 +250,11 @@ class TagInt(NBTBase):
         super().__init__(name, value)
 
     def _check_value(self, value: int):
+        if value is None:
+            return
         if not isinstance(value, int):
             raise ValueError("Int value must be an integer")
-        if value is not None and (value < -2147483648 or value > 2147483647):
+        if value < -2147483648 or value > 2147483647:
             raise ValueError("Int value must be between -2147483648 and 2147483647")
 
     def to_snbt(self) -> str:
@@ -279,9 +281,11 @@ class TagLong(NBTBase):
         super().__init__(name, value)
 
     def _check_value(self, value: int):
+        if value is None:
+            return
         if not isinstance(value, int):
             raise ValueError("Long value must be an integer")
-        if value is not None and (value < -9223372036854775808 or value > 9223372036854775807):
+        if value < -9223372036854775808 or value > 9223372036854775807:
             raise ValueError("Long value must be between -9223372036854775808 and 9223372036854775807")
 
     def to_snbt(self) -> str:
