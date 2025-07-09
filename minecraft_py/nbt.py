@@ -6,6 +6,10 @@ import struct
 
 from networking.data_type import ByteBuffer
 
+"""
+https://minecraft.wiki/w/NBT_format
+"""
+
 def read_nbt(payload: ByteBuffer, compressed: bool=True):
     """
     Factory function to create an NBT tag from its binary representation.
