@@ -137,7 +137,7 @@ class MCPacketInputStream(ConnectionInputStream):
         secured_packet = BufferedPacket(byte_order='big')
         secured_packet.wrap(content, auto_flip=True)
         
-        ### Handshake ###
+        ### State.Handshake ###
         if p_state.state == ConnectionState.HANDSHAKE:
             if secured_packet.read_varint() != 0x00:
                 raise ProtocolError('Invalid packet id')
@@ -191,7 +191,7 @@ class MCPacketInputStream(ConnectionInputStream):
             else:
                 raise Exception('Invalid packet id')
         
-        ### Configuration ###
+        ### State.Configuration ###
         elif p_state.state == ConnectionState.CONFIGURATION:
             id = secured_packet.read_varint()
             if id == 0x00: # Client Information
@@ -211,9 +211,16 @@ class MCPacketInputStream(ConnectionInputStream):
                 logger.debug(f'Plugin message received: {channel}')
                 return s_config.SPluginMessage(channel, data)
             elif id == 0x03: # Finish Configuration Acknowledged
+                # Client state switches to PLAY state
                 return s_config.SFinishConfigurationAcknowledged()
             else:
                 raise Exception(f'Not implemented: {id}')
+        
+        ### State.Play ###
+        elif p_state.state == ConnectionState.PLAY:
+            pass
+
+        ### Unknown State ###
         else:
             raise Exception('Invalid state')
     
