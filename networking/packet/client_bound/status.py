@@ -6,7 +6,7 @@ from networking.packet import ClientboundPacket
 from networking.protocol import ConnectionState, ProtocolVersion
 from networking.data_type import BufferedPacket
 from networking.packet.packet_connection import PacketConnectionState
-from minecraft_py.player import PlayerMP
+from pyncraft.player import PlayerMP
 
 ###
 # packet departure
