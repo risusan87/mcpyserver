@@ -1,5 +1,6 @@
 import struct
 import uuid
+import math
 
 class ByteBuffer:
 
@@ -160,6 +161,38 @@ class BufferedPacket(ByteBuffer):
         uuid_bytes = self.read(16)
         return uuid.UUID(bytes=bytes(uuid_bytes))
     
+    # TODO: For bitsets, also consider endianness
+    def read_bitset(self) -> int:
+        '''
+        The i-th bit is set when (Data[i / 64] & (1 << (i % 64))) != 0, where i starts at 0.
+        In Java, encoded array is created by BitSet.toLongArray()
+        '''
+        length = self.read_varint()
+        data = []
+        for _ in range(length):
+            data.append(self.read_int64())
+        bitset = 0
+        for i, item in enumerate(data):
+            bitset |= item << (i * 64)
+        return bitset
+    
+    def read_fixed_bitset(self, bit_length: int) -> int:
+        '''
+        Reads a fixed-length bitset, where length is the number of bits.
+        The ith bit is set when (Data[i / 8] & (1 << (i % 8))) != 0, where i starts at 0. 
+        This encoding is NOT equivalent to the long array in BitSet.
+        In Java, encoded array is created by BitSet.toByteArray()
+        '''
+        data = []
+        length = math.ceil(bit_length // 8)
+        for _ in range(length):
+            data.append(self.read_uint8())
+        bitset = 0
+        for i, item in enumerate(data):
+            bitset |= item << (i * 8)
+        return bitset
+
+    
     def write_bool(self, value: bool):
         if value == True:
             self.write_uint8(1)
@@ -247,3 +280,18 @@ class BufferedPacket(ByteBuffer):
 
     def write_uuid(self, uuid: uuid.UUID):
         self.write(uuid.bytes)
+
+    def write_bitset(self, bitset: int):
+        if bitset < 0:
+            raise ValueError("Bitset value must be non-negative")
+        as_longs = [bitset >> (i * 64) & 0xFFFFFFFFFFFFFFFF for i in range((bitset.bit_length() + 63) // 64)]
+        self.write_varint(len(as_longs))
+        for item in as_longs:
+            self.write_int64(item)
+    
+    def write_fixed_bitset(self, bitset: int):
+        if bitset < 0:
+            raise ValueError("Bitset value must be non-negative")
+        as_bytes = [(bitset >> (i * 8)) & 0xFF for i in range((bitset.bit_length() + 7) // 8)]
+        for item in as_bytes:
+            self.write_uint8(item)
