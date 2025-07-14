@@ -20,9 +20,9 @@ $ python -m core
 ## 🚀 Project Goals 🚀
 
 Pyncraft is not only a full replacement for vanilla server. Its main goals are:
-- 👩🏻‍💻 **Learnability**: ✅ Make Minecraft server mechanics easier to explore and understand
-- 🛠️ **Hackability**: ✅ Lower barrier for modding and extensions in Python, possibly, other Java-based pre-built plugins adaption.
-- ⚡ **Experimentation**: ✅ Prototype world gen and lighting systems (possibly with GPU accerelation)
+- 👩🏻‍💻 **Learnability**: ✅ Make net.minecraft.server mechanics easier to explore and understand
+- 🛠️ **Hackability**: ✅ Lower barrier for modding in Python, possibly, other Java-based pre-built plugins adaption such as Spigot plugins.
+- ⚡ **Experimentation**: ✅ Prototype world gen, mob AI, or any sort of world behavior (possibly with GPU accerelation)
 
 ## 🤝 Contribution 🤝
 
