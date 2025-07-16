@@ -30,13 +30,13 @@ Python version tested 3.12 may change for any other reasonable purpose for stabl
 
 This section is not meant to be a summer course teaching you how Notchian logic internally works, so start by understanding logic by visiting some wikipedia projects.<br>
 At bare minimum, you must understand difference between logical server side and client side of logic. It is worth noting that you know what is possible and what's not on each sides. Furthermore, There is a difference between "logical" server and "dedicated" server. In short, dedicated server is physical, more abstract server existence in terms of logic that network modules can use to serialize into packets, and logical server is what defines the whole minecraft logic.
-- About sides in Minecraft, refer:<br>
+- ✅ About sides in Minecraft, refer:<br>
 https://docs.minecraftforge.net/en/latest/concepts/sides/
 
-- For notchian minecraft logic, refer to wikipedia projects:<br>
+- ✅ For notchian minecraft logic, refer to wikipedia projects:<br>
 https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge
 
-- For notchian network protocol, refer:<br>
+- ✅ For notchian network protocol, refer:<br>
 https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Protocol
 
 Official Minecraft is in continuous heavy progression for adding new features and introducing new major versions almost every a few year.<br>
